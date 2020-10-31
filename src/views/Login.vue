@@ -1,6 +1,11 @@
 <template>
   <el-container class="login">
-    <el-form class="login-form" :model="user" :rules="rules" ref="loginForm">
+    <el-form
+      class="login-form"
+      ref="loginForm"
+      :model="user"
+      :rules="rules"
+    >
       <el-avatar class="login-avatar" :size="126" icon="el-icon-user-solid" />
       <el-form-item prop="username">
         <el-input
@@ -97,6 +102,8 @@ export default {
   position: absolute;
   top: 0;
   left: 0;
+  min-width: 800px;
+  min-height: 500px;
   width: 100%;
   height: 100%;
   background-color: #2f4050;

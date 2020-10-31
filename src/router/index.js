@@ -11,12 +11,12 @@ const routes = [
     component: () => import(/* webpackChunkName: "index" */ '@/views/index.vue')
   },
   {
-    name: 'Index',
+    name: 'Index1',
     path: '/index',
     component: () => import(/* webpackChunkName: "index" */ '@/views/index.vue')
   },
   {
-    name: 'Index',
+    name: 'Index2',
     path: '/index.html',
     component: () => import(/* webpackChunkName: "index" */ '@/views/index.vue')
   },
