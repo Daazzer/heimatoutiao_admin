@@ -1,6 +1,8 @@
 # 黑马头条后台
 
-## 项目依赖安装
+
+
+## <a href="#installDependency" id="installDependency">项目依赖安装</a>
 
 ```
 npm install
@@ -20,7 +22,7 @@ npm run build
 
 
 
-## 创建项目
+## <a href="#createProject" id="createProject">创建项目</a>
 
 ```powershell
 vue ui
@@ -53,6 +55,8 @@ vue ui
 ```
 
 
+
+[editorconfig 规范地址](https://editorconfig.org/)
 
 ```tex
 # /.editorconfig
@@ -174,7 +178,7 @@ Vue.prototype.$api = api
 
 
 
-### src 目录结构
+### <a href="#directory" id="directory">src 目录结构</a>
 
 ```powershell
 src
@@ -186,13 +190,53 @@ src
 ├─styles
 ├─utils
 └─views
+    └─index
+```
+
+
+
+## <a href="#implementNotFoundPage" id="implementNotFoundPage">404 页面配置</a>
+
+考虑到如果什么页面都找不到，应该返回 404 页面
+
+
+
+### 404 路由配置
+
+```js
+// @/router/index.js
+const routes = [
+  // ...
+  {
+    name: 'NotFound',
+    path: '*',
+    component: () => import(/* webpackChunkName: "notFound" */ '@/views/NotFound.vue')
+  }
+]
+```
+
+
+
+### 404 页面结构
+
+```vue
+<!-- @/views/NotFound.vue -->
+<template>
+  <h1>404 Not Found!!</h1>
+</template>
+
+<script>
+export default {
+  name: 'NotFound'
+}
+</script>
 ```
 
 
 
 
 
-## 登录页的实现
+## <a href="#implementLoginPage" id="implementLoginPage">登录页的实现</a>
 
 ### 添加登录页的路由
 
@@ -323,7 +367,7 @@ const routes = [
 
 
 
-### 实现登录页的动态 js 数据交互
+### 实现登录页的动态数据交互
 
 - 绑定好表单数据，用于校验
 - rules 的使用方法查看地址 https://github.com/yiminghe/async-validator
@@ -425,5 +469,325 @@ router.beforeEach((to, from, next) => {
 })
 
 // ...
+```
+
+
+
+## <a href="implementIndexPage" id="implementIndexPage">首页的实现</a>
+
+### 添加首页路由
+
+- 由于首页的结构是一个路由嵌套结构，所以包含多个子路由
+  - 其专门建立了一个[目录](#directory)表示当前视图有多个子路由视图
+
+用 URL 正则匹配首页的路由，匹配 `/index` 或 `/index.html` 或 `/`
+
+```js
+// @/router/index.js
+const routes = [
+  {
+    name: 'Index',
+    path: '/(index|index.html)?',
+    component: () => import(/* webpackChunkName: "index" */ '@/views/index'),
+  },
+  // ...
+```
+
+
+
+### 实现首页的视图结构
+
+- 当 Vue Loader 编译单文件组件中的 `<template>` 块时，它也会将所有遇到的资源 URL 转换为 **webpack 模块请求**。
+
+- 使用 element-ui 的 `Image` 组件时，会出现以上情况，如果 `src` 直接输入静态路径。会导致图片显示不出来
+
+  - 例如，下面的模板代码片段：
+
+    ```vue
+    <img src="../image.png">
+    ```
+
+    将会被编译成为：
+
+    ```js
+    createElement('img', {
+      attrs: {
+        src: require('../image.png') // 现在这是一个模块的请求了
+      }
+    })
+    ```
+
+  - 可以参考 https://vue-loader.vuejs.org/zh/guide/asset-url.html
+
+
+
+```vue
+<template>
+  <el-container class="index">
+    <el-aside width="250px" class="index-aside">
+      <div class="index-brand">
+        <!-- 注意，由于 webpack 打包配置原因，这里可以使用 require 或者 import 到 data 中再挂载上来进行处理  -->
+        <el-image class="logo" :src="require('@/assets/logo.png')">
+          <template #error>
+            <i class="el-icon-picture-outline logo__alias"></i>
+          </template>
+        </el-image>
+      </div>
+	  <!-- 为了使菜单与路由同步关联变化这里使用 vm.$route.path 填充 -->
+      <el-menu
+        :default-active="$route.path"
+        class="index-aside__menu"
+        background-color="#545c64"
+        text-color="#fff"
+        active-text-color="#ffd04b"
+        router
+        unique-opened
+      >
+        <el-submenu index="1">
+          <template #title>
+            <i class="el-icon-s-custom"></i>
+            <span>用户管理</span>
+          </template>
+          <el-menu-item index="1-1">
+            <span>用户列表</span>
+          </el-menu-item>
+        </el-submenu>
+        <el-submenu index="2">
+          <template #title>
+            <i class="el-icon-notebook-2"></i>
+            <span>文章管理</span>
+          </template>
+          <el-menu-item route index="/index/articleList">
+            <span>文章列表</span>
+          </el-menu-item>
+          <el-menu-item index="/index/articlePublish">
+            <span>文章发布</span>
+          </el-menu-item>
+        </el-submenu>
+        <el-submenu index="3">
+          <template #title>
+            <i class="el-icon-s-grid"></i>
+            <span>栏目管理</span>
+          </template>
+          <el-menu-item index="3-1">
+            <span>栏目列表</span>
+          </el-menu-item>
+        </el-submenu>
+      </el-menu>
+    </el-aside>
+    <el-container>
+      <el-header height="75px" class="index-header">
+        <el-button class="toggle-btn" type="text" icon="el-icon-s-fold" />
+        <h1 class="system-title">黑马头条后台管理系统</h1>
+        <div class="index-header__welcome">
+          <span>欢迎你：{{ nickname }}</span>
+          <el-button class="exit-btn" type="text" @click="logout">退出</el-button>
+        </div>
+      </el-header>
+      <el-main>
+        <!-- 动态匹配面包屑导航路径 -->
+        <el-breadcrumb class="index-path" separator="/">
+          <el-breadcrumb-item :to="$route.name === 'Welcome' ? null : '/index/welcome'">首页</el-breadcrumb-item>
+          <el-breadcrumb-item v-if="$route.name !== 'Welcome'">{{ parentPathName }}</el-breadcrumb-item>
+          <el-breadcrumb-item v-if="$route.name !== 'Welcome'">{{ curPathName }}</el-breadcrumb-item>
+        </el-breadcrumb>
+        <router-view />
+      </el-main>
+    </el-container>
+  </el-container>
+</template>
+```
+
+
+
+### 首页的样式
+
+使用 sass 的 `@mixin` 和 `@include` 混入代码块，减少代码书写
+
+
+
+```vue
+<style lang="scss" scoped>
+.index {
+  height: 100%;
+  min-height: 640px;
+  min-width: 960px;
+  $primaryColor: #545c64;
+  &-aside {
+    background-color: $primaryColor;
+    &__menu {
+      border: none;
+    }
+  }
+  &-brand {
+    text-align: center;
+    padding: 20px 0;
+    background-color: $primaryColor;
+    .logo {
+      $size: 100px;
+      width: $size;
+      height: $size;
+      border-radius: 50%;
+      &__alias {
+        font-size: 50px;
+      }
+    }
+  }
+  &-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #fff;
+    background-color: $primaryColor;
+    h1 {
+      font-size: 36px;
+    }
+    // sass 的混入
+    @mixin indexHeaderBtn {
+      $color: #fff;
+      color: $color;
+      padding: 0;
+      &:hover {
+        color: $color;
+      }
+    }
+    .toggle-btn {
+      @include indexHeaderBtn;
+      font-size: 30px;
+    }
+    .exit-btn {
+      @include indexHeaderBtn;
+      margin-left: 20px;
+    }
+  }
+  &-path {
+    margin-bottom: 25px;
+  }
+}
+</style>
+```
+
+
+
+### 实现首页的动态数据交互
+
+面包屑的动态匹配，利用当前 `$route` 的名字来判断当前的路由页，从而进行面包屑路径的匹配
+
+
+
+```vue
+<script>
+export default {
+  name: 'Index',
+  data () {
+    const nickname = JSON.parse(localStorage.getItem('heimatoutiao_admin_userInfo')).nickname
+
+    return {
+      nickname
+    }
+  },
+  methods: {
+    logout () {
+      localStorage.removeItem('heimatoutiao_admin_userInfo')
+      this.$router.push('/login')
+      this.$message.success('退出成功')
+    }
+  },
+  computed: {
+    parentPathName () {
+      // 判断当前路由名
+      const currentRouteName = this.$route.name
+      switch (currentRouteName) {
+        case 'UserList':
+          return '用户管理'
+        case 'ArticleList':
+        case 'ArticlePublish':
+          return '文章管理'
+        case 'CateList':
+          return '栏目管理'
+      }
+    },
+    curPathName () {
+      const currentRouteName = this.$route.name
+      switch (currentRouteName) {
+        case 'UserList':
+          return '用户列表'
+        case 'ArticleList':
+          return '文章列表'
+        case 'ArticlePublish':
+          return '文章发布'
+        case 'CateList':
+          return '栏目列表'
+      }
+    }
+  }
+}
+</script>
+```
+
+
+
+## <a href="#implementWelcomePage" id="implementWelcomePage">欢迎页的实现</a>
+
+### 添加欢迎页的路由
+
+给 `Index` 路由组件重定向到欢迎页，默认显示欢迎页
+
+```js
+// @/router/index.js
+const routes = [
+  {
+    name: 'Index',
+    path: '/(index|index.html)?',
+    redirect: '/index/welcome',
+    component: () => import(/* webpackChunkName: "index" */ '@/views/index'),
+    children: [
+      {
+        name: 'Welcome',
+        path: 'welcome',
+        component: () => import(/* webpackChunkName: "index" */ '@/views/index/Welcome.vue')
+      },
+  // ...
+```
+
+
+
+### 简单实现欢迎页
+
+```vue
+<template>
+  <el-container class="welcome" direction="vertical">
+    <h2><el-image class="logo" :src="require('@/assets/logo.png')" /></h2>
+    <h3>欢迎，{{ nickname }}</h3>
+  </el-container>
+</template>
+
+<script>
+export default {
+  name: 'Welcome',
+  data () {
+    const nickname = JSON.parse(localStorage.getItem('heimatoutiao_admin_userInfo')).nickname
+    return {
+      nickname
+    }
+  }
+}
+</script>
+
+<style lang="scss" scoped>
+.welcome {
+  h2, h3 {
+    text-align: center;
+  }
+  h3 {
+    font-size: 1.5em;
+  }
+  .logo {
+    $size: 250px;
+    width: $size;
+    height: $size;
+  }
+}
+</style>
 ```
 

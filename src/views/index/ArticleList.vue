@@ -16,29 +16,33 @@
           label="标题"
         />
         <el-table-column
+          v-slot="scope"
           prop="type"
           label="类型"
           width="120"
-        />
+        >
+          {{ scope.row.type === 1 ? '文章' : '视频' }}
+        </el-table-column>
         <el-table-column
           prop="user.nickname"
           label="作者"
           width="210"
         />
         <!-- 可以用最简洁的作用域插槽的语法 -->
-        <el-table-column class="articlelist-opt" label="操作" width="180">
+        <el-table-column v-slot="scope" class="articlelist-opt" label="操作" width="180">
           <el-tooltip
             popper-class="articlelist-opt__tips"
             content="编辑"
             placement="bottom-end"
-            :open-delay="800"
             effect="light"
+            :open-delay="800"
             :visible-arrow="false"
            >
             <el-button
               size="medium"
               icon="el-icon-edit"
               type="primary"
+              @click="handleEdit(scope)"
             />
           </el-tooltip>
           <el-tooltip
@@ -109,6 +113,9 @@ export default {
     handleCurrentChange(pageIndex) {
       this.pageIndex = pageIndex
       this.getArticle(pageIndex, this.pageSize)
+    },
+    handleEdit (scope) {
+      console.log(scope.row.type)
     }
   },
   mounted () {
