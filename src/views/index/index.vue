@@ -9,11 +9,13 @@
         </el-image>
       </div>
       <el-menu
-        default-active="1-1"
+        :default-active="$route.path"
         class="index-aside__menu"
         background-color="#545c64"
         text-color="#fff"
         active-text-color="#ffd04b"
+        router
+        unique-opened
       >
         <el-submenu index="1">
           <template #title>
@@ -29,10 +31,10 @@
             <i class="el-icon-notebook-2"></i>
             <span>文章管理</span>
           </template>
-          <el-menu-item index="2-1">
+          <el-menu-item route index="/index/articleList">
             <span>文章列表</span>
           </el-menu-item>
-          <el-menu-item index="2-2">
+          <el-menu-item index="/index/articlePublish">
             <span>文章发布</span>
           </el-menu-item>
         </el-submenu>
@@ -49,28 +51,77 @@
     </el-aside>
     <el-container>
       <el-header height="75px" class="index-header">
-        <i class="el-icon-s-fold toggle-btn"></i>
+        <el-button class="toggle-btn" type="text" icon="el-icon-s-fold" />
         <h1 class="system-title">黑马头条后台管理系统</h1>
         <div class="index-header__welcome">
-          <span>欢迎你：52期的小伙伴</span>
-          <span class="exit-btn"> 退出</span>
+          <span>欢迎你：{{ nickname }}</span>
+          <el-button class="exit-btn" type="text" @click="logout">退出</el-button>
         </div>
       </el-header>
-      <el-main>Main</el-main>
+      <el-main>
+        <el-breadcrumb class="index-path" separator="/">
+          <el-breadcrumb-item :to="$route.name === 'Welcome' ? null : '/index/welcome'">首页</el-breadcrumb-item>
+          <el-breadcrumb-item v-if="$route.name !== 'Welcome'">{{ parentPathName }}</el-breadcrumb-item>
+          <el-breadcrumb-item v-if="$route.name !== 'Welcome'">{{ curPathName }}</el-breadcrumb-item>
+        </el-breadcrumb>
+        <router-view />
+      </el-main>
     </el-container>
   </el-container>
 </template>
 
 <script>
 export default {
-  name: 'Index'
+  name: 'Index',
+  data () {
+    const nickname = JSON.parse(localStorage.getItem('heimatoutiao_admin_userInfo')).nickname
+
+    return {
+      nickname
+    }
+  },
+  methods: {
+    logout () {
+      localStorage.removeItem('heimatoutiao_admin_userInfo')
+      this.$router.push('/login')
+      this.$message.success('退出成功')
+    }
+  },
+  computed: {
+    parentPathName () {
+      const currentRouteName = this.$route.name
+      switch (currentRouteName) {
+        case 'UserList':
+          return '用户管理'
+        case 'ArticleList':
+        case 'ArticlePublish':
+          return '文章管理'
+        case 'CateList':
+          return '栏目管理'
+      }
+    },
+    curPathName () {
+      const currentRouteName = this.$route.name
+      switch (currentRouteName) {
+        case 'UserList':
+          return '用户列表'
+        case 'ArticleList':
+          return '文章列表'
+        case 'ArticlePublish':
+          return '文章发布'
+        case 'CateList':
+          return '栏目列表'
+      }
+    }
+  }
 }
 </script>
 
 <style lang="scss" scoped>
 .index {
   height: 100%;
-  min-height: 500px;
+  min-height: 640px;
+  min-width: 960px;
   $primaryColor: #545c64;
   &-aside {
     background-color: $primaryColor;
@@ -101,19 +152,25 @@ export default {
     h1 {
       font-size: 36px;
     }
+    @mixin indexHeaderBtn {
+      $color: #fff;
+      color: $color;
+      padding: 0;
+      &:hover {
+        color: $color;
+      }
+    }
     .toggle-btn {
+      @include indexHeaderBtn;
       font-size: 30px;
     }
     .exit-btn {
+      @include indexHeaderBtn;
       margin-left: 20px;
     }
   }
-}
-
-.el-main {
-  background-color: #e9eef3;
-  color: #333;
-  text-align: center;
-  line-height: 160px;
+  &-path {
+    margin-bottom: 25px;
+  }
 }
 </style>

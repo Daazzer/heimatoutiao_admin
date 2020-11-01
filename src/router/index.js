@@ -7,18 +7,26 @@ Vue.use(VueRouter)
 const routes = [
   {
     name: 'Index',
-    path: '/',
-    component: () => import(/* webpackChunkName: "index" */ '@/views/index.vue')
-  },
-  {
-    name: 'Index1',
-    path: '/index',
-    component: () => import(/* webpackChunkName: "index" */ '@/views/index.vue')
-  },
-  {
-    name: 'Index2',
-    path: '/index.html',
-    component: () => import(/* webpackChunkName: "index" */ '@/views/index.vue')
+    path: '/(index|index.html)?',
+    redirect: '/index/welcome',
+    component: () => import(/* webpackChunkName: "index" */ '@/views/index'),
+    children: [
+      {
+        name: 'Welcome',
+        path: 'welcome',
+        component: () => import(/* webpackChunkName: "index" */ '@/views/index/Welcome.vue')
+      },
+      {
+        name: 'ArticleList',
+        path: 'articleList',
+        component: () => import(/* webpackChunkName: "index" */ '@/views/index/ArticleList.vue')
+      },
+      {
+        name: 'ArticlePublish',
+        path: 'articlePublish',
+        component: () => import(/* webpackChunkName: "index" */ '@/views/index/ArticlePublish.vue')
+      },
+    ]
   },
   {
     name: 'Login',

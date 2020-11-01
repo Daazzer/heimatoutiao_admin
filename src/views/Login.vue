@@ -30,7 +30,8 @@
         <el-button
           class="login-form__btn"
           type="primary"
-          @click="login"
+          native-type="submit"
+          @click.prevent="login"
         >登录</el-button>
       </el-form-item>
     </el-form>
@@ -85,8 +86,8 @@ export default {
         return this.$message.error('登录失败，发生错误')
       }
 
-      const { token, user: { id } } = res.data.data
-      const userInfo = JSON.stringify({ token, id })
+      const { token, user: { id, nickname } } = res.data.data
+      const userInfo = JSON.stringify({ token, id, nickname })
 
       localStorage.setItem('heimatoutiao_admin_userInfo', userInfo)
 
