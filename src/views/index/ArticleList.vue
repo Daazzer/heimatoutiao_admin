@@ -33,7 +33,7 @@
           <el-tooltip
             popper-class="articlelist-opt__tips"
             content="编辑"
-            placement="bottom-end"
+            placement="bottom"
             effect="light"
             :open-delay="800"
             :visible-arrow="false"
@@ -42,13 +42,13 @@
               size="medium"
               icon="el-icon-edit"
               type="primary"
-              @click="handleEdit(scope)"
+              @click="handleEdit(scope.row)"
             />
           </el-tooltip>
           <el-tooltip
             popper-class="articlelist-opt__tips"
             content="删除"
-            placement="bottom-end"
+            placement="bottom"
             :open-delay="800"
             effect="light"
             :visible-arrow="false"
@@ -57,6 +57,7 @@
               size="medium"
               icon="el-icon-delete"
               type="danger"
+              @click="handleDelete(scope.row)"
             />
           </el-tooltip>
         </el-table-column>
@@ -114,8 +115,17 @@ export default {
       this.pageIndex = pageIndex
       this.getArticle(pageIndex, this.pageSize)
     },
-    handleEdit (scope) {
-      console.log(scope.row.type)
+    handleEdit (row) {
+      this.$router.push(`/articlePublish/${row.id}`)
+    },
+    handleDelete (row) {
+      this.$confirm(`此操作将永久删除 id 为${row.id}的文章, 是否继续?`, '警告', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      })
+        .then(() => this.$message.success('删除成功!'))
+        .catch(() => undefined)
     }
   },
   mounted () {

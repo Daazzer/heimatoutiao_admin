@@ -10,6 +10,22 @@ import axios from '@/utils/axios_http-config'
  */
 const getArticle = params => axios.get('/post', { params }).then(res => [null, res]).catch(err => [err])
 
+/**
+ * 发布文章
+ * @param {Object} data 参数对象
+ * @param {string} data.title 文章标题
+ * @param {string} data.content 文章内容
+ * @param {Array<Object>} data.categories 所属栏目ID集合
+ * @param {Array<Object>} data.cover 封面图片ID集合
+ * @param {number} data.type 1为文章，2为视频
+ * @returns {Promise<Response>}
+ */
+const publishArticle = data => axios.post('/post', data).then(res => [null, res]).catch(err => [err])
+
+const getArticleById = id => axios.get(`/post/${id}`).then(res => [null, res]).catch(err => [err])
+
 export default {
-  getArticle
+  getArticle,
+  publishArticle,
+  getArticleById
 }

@@ -23,7 +23,7 @@ const routes = [
       },
       {
         name: 'ArticlePublish',
-        path: 'articlePublish',
+        path: 'articlePublish/:id?',
         component: () => import(/* webpackChunkName: "index" */ '@/views/index/ArticlePublish.vue')
       },
     ]

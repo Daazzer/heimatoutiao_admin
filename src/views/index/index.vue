@@ -77,7 +77,8 @@ export default {
     const nickname = JSON.parse(localStorage.getItem('heimatoutiao_admin_userInfo')).nickname
 
     return {
-      nickname
+      nickname,
+      articleId: ''
     }
   },
   methods: {
@@ -113,7 +114,14 @@ export default {
           return '栏目列表'
       }
     }
-  }
+  },
+  // beforeRouteUpdate (to, from, next) {
+  //   console.log(this.$route.path)
+  //   if (to.name === 'ArticlePublish') {
+  //     this.articleId = to.params.id
+  //   }
+  //   next()
+  // }
 }
 </script>
 

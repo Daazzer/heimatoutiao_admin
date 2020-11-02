@@ -11,7 +11,7 @@ export default {
 </script>
 
 <style lang="scss">
-@import "../node_modules/element-ui/lib/theme-chalk/index.css";
+@import "~element-ui/lib/theme-chalk/index.css";
 @import "./styles/reset.css";
 @import "./styles/icomoon.css";
 @import "./styles/common.scss";
