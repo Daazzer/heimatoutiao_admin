@@ -13,17 +13,17 @@ const routes = [
     children: [
       {
         name: 'Welcome',
-        path: 'welcome',
+        path: '/index/welcome',
         component: () => import(/* webpackChunkName: "index" */ '@/views/index/Welcome.vue')
       },
       {
         name: 'ArticleList',
-        path: 'articleList',
+        path: '/index/articleList',
         component: () => import(/* webpackChunkName: "index" */ '@/views/index/ArticleList.vue')
       },
       {
         name: 'ArticlePublish',
-        path: 'articlePublish/:id?',
+        path: '/index/articlePublish/:id?',
         component: () => import(/* webpackChunkName: "index" */ '@/views/index/ArticlePublish.vue')
       },
     ]

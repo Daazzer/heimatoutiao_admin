@@ -116,7 +116,7 @@ export default {
       this.getArticle(pageIndex, this.pageSize)
     },
     handleEdit (row) {
-      this.$router.push(`/articlePublish/${row.id}`)
+      this.$router.push(`/index/articlePublish/${row.id}`)
     },
     handleDelete (row) {
       this.$confirm(`此操作将永久删除 id 为${row.id}的文章, 是否继续?`, '警告', {

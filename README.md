@@ -1,20 +1,61 @@
 # 黑马头条后台
 
+## <a href="#intro" id="intro">介绍</a>
 
+对[黑马头条前台](https://gitee.com/Daazzer/heimatoutiao)项目进行管理
 
-## <a href="#installDependency" id="installDependency">项目依赖安装</a>
+- 项目页面
+
+  - 登录页面
+  - 欢迎页面
+  - 文章发布页
+  - 文章编辑页
+  - 文章表格数据页
+
+- 项目使用技术
+
+  - [vue](https://github.com/vuejs/vue)
+  - [vue-router](https://github.com/vuejs/vue-router)
+  - [element-ui](https://element.eleme.cn/#/zh-CN/)
+  - [axios](https://github.com/axios/axios)
+  - [sass](https://github.com/sass/sass)
+
+- 版本管理
+
+  - git
+
+- <a href="#directory" id="directory">项目 `src` 目录结构</a>
+
+  ```powershell
+  src
+  ├─api # 项目服务器 api
+  ├─assets
+  │  └─fonts
+  ├─components # 项目封装的组件
+  ├─router # 视图路由
+  ├─styles
+  ├─utils # 通用性 js 文件
+  └─views # 路由视图
+      └─index # 首页目录
+  ```
+
+  
+
+## <a href="#usage" id="usage">使用方法</a>
+
+项目依赖安装
 
 ```
 npm install
 ```
 
-### 开发服务器，编译与热重载
+开发服务器，编译与热重载
 
 ```
 npm start
 ```
 
-### 编译打包到生产环境
+编译打包到生产环境
 
 ```
 npm run build
@@ -22,32 +63,17 @@ npm run build
 
 
 
-## <a href="#createProject" id="createProject">创建项目</a>
-
-```powershell
-vue ui
-```
 
 
+## <a href="#formatConfig" id="formatConfig">项目格式化配置</a>
 
-- npm 包管理
-- 生成 git 仓库
-- 选择 dart/sass 预编译
-- 选择独立配置文件
+自定义的 vscode 编辑器配置：`/.vscode/settings.json`
 
+- 给函数名与函数括号之间添加一个空格
 
-
-### 基本项目格式化配置
-
-在项目根目录下
-
-- 使用自己定义好的 .vscode 配置文件
-- 按照 ESLint 标准，创建一个 .editorconfig 配置文件
-
-
+- 移除分号
 
 ```json
-// /settings.json
 {
     "javascript.format.insertSpaceBeforeFunctionParenthesis": true,
     "javascript.format.semicolons": "remove"
@@ -56,10 +82,17 @@ vue ui
 
 
 
-[editorconfig 规范地址](https://editorconfig.org/)
+自定义的 .editorconfig 配置文件：[`/.editorconfig` ](.editorconfig)
+
+[editorconfig 规范](https://editorconfig.org/)
+
+- 默认 `utf-8` 字符集
+- 空格缩进类型
+- 两个缩进
+- 去掉行尾空格
+- 空行结束
 
 ```tex
-# /.editorconfig
 # 这个文件可以配合 vscode 的 editorconfig 插件自动格式化你指定好的文件
 # http://editorconfig.org
 
@@ -76,54 +109,14 @@ insert_final_newline = true
 
 
 
-### 安装 element-ui
+## <a href="#server" id="server">项目数据服务器</a>
 
-```powershell
-npm i element-ui -S
-```
+- 配置服务器基本路径：[@/utils/axios_http-config.js](src/utils/axios_http-config.js)
+- 服务器 api：[@/api](src/api)
 
-
-
-在 main.js 全局引入 element-ui
+服务器基地址配置例子：
 
 ```js
-import ElementUI from 'element-ui'
-
-Vue.use(ElementUI)
-```
-
-
-
-在 App.vue 引入 element-ui 的样式
-
-```vue
-<!-- 
-	...
--->
-<style lang="scss">
-@import "../node_modules/element-ui/lib/theme-chalk/index.css";
-// ...
-</style>
-```
-
-
-
-> **注意：**类似于这种全局引入的大型的样式文件，最好直接引 css 格式，而且最好是压缩过的，这样预编译热重载的速度会快一些
-
-
-
-### 安装 axios
-
-```powershell
-npm i axios -S
-```
-
-
-
-配置 axios
-
-```js
-// @/utils/axios_http-config.js
 import axios from 'axios'
 
 axios.defaults.baseURL = 'http://localhost:3000'
@@ -131,45 +124,49 @@ axios.defaults.baseURL = 'http://localhost:3000'
 export default axios
 ```
 
-
-
-封装 api
+api 配置例子：
 
 ```js
-// @/api/_user.js
 import axios from '@/utils/axios_http-config'
 
 /**
- * 登录
- * @param {Object} data 参数对象
- * @param {string} data.username 用户名 / 手机
- * @param {string} data.password 密码
+ * 文章列表
+ * @param {Object} [params] 参数对象
+ * @param {number} [data.category] 栏目id
+ * @param {number} [data.pageIndex] 当前页码
+ * @param {number} [data.pageSize] 每页显示数据条数
  * @returns {Promise<Response>}
  */
-const login = data => axios.post('/login', data).then(res => [null, res]).catch(err => [err])
+const getArticle = params => axios.get('/post', { params }).then(res => [null, res]).catch(err => [err])
+
+/**
+ * 发布文章
+ * @param {Object} data 参数对象
+ * @param {string} data.title 文章标题
+ * @param {string} data.content 文章内容
+ * @param {Array<Object>} data.categories 所属栏目ID集合
+ * @param {Array<Object>} data.cover 封面图片ID集合
+ * @param {number} data.type 1为文章，2为视频
+ * @returns {Promise<Response>}
+ */
+const publishArticle = data => axios.post('/post', data).then(res => [null, res]).catch(err => [err])
+
+const getArticleById = id => axios.get(`/post/${id}`).then(res => [null, res]).catch(err => [err])
 
 export default {
-  login
+  getArticle,
+  publishArticle,
+  getArticleById
 }
 ```
 
 
 
-```js
-// @/api/index.js
-import user from './_user'
+为了使用 api 时不使用引入，将 api 方法挂载到 vue 根实例原型上
 
-export default {
-  ...user
-}
-```
-
-
-
-将 api 挂载到根实例原型
+[@/main.js](src/main.js)
 
 ```js
-// @/main.js
 import api from './api'
 Vue.prototype.$api = api
 ```
@@ -178,70 +175,38 @@ Vue.prototype.$api = api
 
 
 
-### <a href="#directory" id="directory">src 目录结构</a>
+## <a href="#router" id="router">项目路由</a>
 
-```powershell
-src
-├─api
-├─assets
-│  └─fonts
-├─components
-├─router
-├─styles
-├─utils
-└─views
-    └─index
-```
+项目路由配置：[@/router](src/router)
+
+| URL                         | 描述                      |
+| --------------------------- | ------------------------- |
+| `/login`                    | [登录页](#LoginPage)      |
+| `/index/welcome`            | 欢迎页                    |
+| `/index/articleList`        | 文章列表页                |
+| `/index/articlePublish`     | 文章发布页                |
+| `/index/articlePublish/:id` | 文章编辑页                |
+| `*`                         | [404 页面](#NotFoundPage) |
 
 
 
-## <a href="#implementNotFoundPage" id="implementNotFoundPage">404 页面配置</a>
+## <a href="#NotFoundPage" id="NotFoundPage">404 页面</a>
 
 考虑到如果什么页面都找不到，应该返回 404 页面
 
-
-
-### 404 路由配置
-
-```js
-// @/router/index.js
-const routes = [
-  // ...
-  {
-    name: 'NotFound',
-    path: '*',
-    component: () => import(/* webpackChunkName: "notFound" */ '@/views/NotFound.vue')
-  }
-]
-```
+- 页面视图：[@/views/NotFound.vue](src/views/NotFound.vue)
 
 
 
-### 404 页面结构
+## <a href="#LoginPage" id="LoginPage">登录页的实现</a>
 
-```vue
-<!-- @/views/NotFound.vue -->
-<template>
-  <h1>404 Not Found!!</h1>
-</template>
-
-<script>
-export default {
-  name: 'NotFound'
-}
-</script>
-```
-
-
-
-
-
-## <a href="#implementLoginPage" id="implementLoginPage">登录页的实现</a>
+[@/views/Login.vue](src/views/Login.vue)
 
 ### 添加登录页的路由
 
+有时候我们想把某个路由下的所有组件都打包在同个异步块 (chunk) 中。只需要使用 [命名 chunk](https://webpack.js.org/guides/code-splitting-require/#chunkname)，一个特殊的注释语法来提供 chunk name (需要 Webpack > 2.4)，之后的部分与此相同。[参考](https://router.vuejs.org/zh/guide/advanced/lazy-loading.html#%E6%8A%8A%E7%BB%84%E4%BB%B6%E6%8C%89%E7%BB%84%E5%88%86%E5%9D%97)
+
 ```js
-// @/router/index.js
 const routes = [
   // ...
   {
@@ -255,11 +220,21 @@ const routes = [
 
 
 
-
-
 ### 实现登录页的视图结构
 
-使用 element-ui 的 `Container`、`Form`、`Avatar`、`FormItem`、`Input` 组件
+#### 登录效果图
+
+![登录页](src/assets/i/loginPage.png)
+
+
+
+#### 登录页模板
+
+技术实现：
+
+- 使用 element-ui 的 `Container`、`Form`、`Avatar`、`FormItem`、`Input` 组件
+
+
 
 ```vue
 <template>
@@ -304,9 +279,11 @@ const routes = [
 
 
 
-### 实现登录页的样式
+#### 登录页样式
 
-使用了 BEM 类名规范定义样式类名，配合  scss 的父选择器
+技术实现：
+
+- 使用了 BEM 类名规范定义样式类名，配合  scss 的父选择器
 
 ```vue
 <style lang="scss" scoped>
@@ -367,10 +344,19 @@ const routes = [
 
 
 
-### 实现登录页的动态数据交互
+### 实现登录页动态数据交互
 
-- 绑定好表单数据，用于校验
-- rules 的使用方法查看地址 https://github.com/yiminghe/async-validator
+技术实现：
+
+- 使用 `Form`  组件 `rules` 属性绑定[校验规则](https://github.com/yiminghe/async-validator)
+- 使用了 `Input` 组件的 `focus` 事件重置校验规则
+- 输入框不能为空的限制
+- 用户名要求为 4-5 位非空字符，或者是合法的 11 为手机号码
+- 点击登录按钮会进行登录
+  - 如果验证不通过，则阻止登录，并在输入框底下出现提示
+  - 如果本地存储有 token，则表示已经登录，阻止登录，并提示用户
+  - 如果响应出错，则提示用户，并阻止登录
+  - 登录成功后，存储 token 到 `localStorage` 并且跳转路由到首页
 
 ```vue
 <script>
@@ -432,7 +418,7 @@ export default {
       const { token, user: { id } } = res.data.data
       // 将响应回来的 token 与 id 存到一个对象中然后序列化之后再存到本地 
       const userInfo = JSON.stringify({ token, id })
-		
+
       localStorage.setItem('heimatoutiao_admin_userInfo', userInfo)
 
       this.$router.push('/')
@@ -445,10 +431,16 @@ export default {
 
 
 
-### 配合登录页设置路由守卫
+## <a href="#routerGuard" id="routerGuard">设置路由守卫检测登录状态</a>
+
+[@/router](src/router)
+
+技术实现：
+
+- vue-router 的[全局前置守卫方法](https://router.vuejs.org/zh/guide/advanced/navigation-guards.html#%E5%85%A8%E5%B1%80%E5%89%8D%E7%BD%AE%E5%AE%88%E5%8D%AB) `router.beforeEach` 实现路由拦截
+- 如果用户跳到非登录页，则都要检测是否有 token，如果没有，则强制跳回登录页
 
 ```js
-// @/router/index.js
 // ...
 
 import { Message } from 'element-ui'
@@ -473,51 +465,54 @@ router.beforeEach((to, from, next) => {
 
 
 
-## <a href="implementIndexPage" id="implementIndexPage">首页的实现</a>
+## <a href="#IndexWelcomePage" id="IndexWelcomePage">首页与欢迎页的实现</a>
 
-### 添加首页路由
+### 添加首页与欢迎页路由
 
-- 由于首页的结构是一个路由嵌套结构，所以包含多个子路由
-  - 其专门建立了一个[目录](#directory)表示当前视图有多个子路由视图
+[@/router](src/router)
 
-用 URL 正则匹配首页的路由，匹配 `/index` 或 `/index.html` 或 `/`
+技术实现：
+
+- 欢迎页由首页嵌套着，所以欢迎页在 `Index` 的 `children` 属性下，默认首页和欢迎页一同显示
+- 由于首页的结构是一个路由嵌套结构，所以包含多个子路由，所以专门建立了一个[index 目录](#directory)表示当前视图有多个子路由视图
+
+- 用 [URL 正则](https://github.com/pillarjs/path-to-regexp) 匹配首页的路由，匹配 `/index` 或 `/index.html` 或 `/`
+- 给 `Index` 路由组件重定向到欢迎页，默认显示欢迎页
 
 ```js
-// @/router/index.js
+// ...
 const routes = [
-  {
     name: 'Index',
     path: '/(index|index.html)?',
+    redirect: '/index/welcome',
     component: () => import(/* webpackChunkName: "index" */ '@/views/index'),
-  },
+    children: [
+      {
+        name: 'Welcome',
+        path: '/index/welcome',
+        component: () => import(/* webpackChunkName: "index" */ '@/views/index/Welcome.vue')
+      },
   // ...
 ```
 
 
 
-### 实现首页的视图结构
+### 实现首页视图结构
 
-- 当 Vue Loader 编译单文件组件中的 `<template>` 块时，它也会将所有遇到的资源 URL 转换为 **webpack 模块请求**。
+[@views/index](src/views/index)
 
-- 使用 element-ui 的 `Image` 组件时，会出现以上情况，如果 `src` 直接输入静态路径。会导致图片显示不出来
+#### 首页效果图
 
-  - 例如，下面的模板代码片段：
+![首页](src/assets/i/indexPage.png)
 
-    ```vue
-    <img src="../image.png">
-    ```
+#### 首页模板
 
-    将会被编译成为：
+技术实现：
 
-    ```js
-    createElement('img', {
-      attrs: {
-        src: require('../image.png') // 现在这是一个模块的请求了
-      }
-    })
-    ```
-
-  - 可以参考 https://vue-loader.vuejs.org/zh/guide/asset-url.html
+- 使用 `Container`、`Aside` 、`Header`、`Main` 划分页面结构
+- 使用 `Image` 组件放置 logo
+- 使用 `Menu`、`SubMenu`、`MenuItem` 组件进行导航
+- 使用 `Breadcrumb` 组件显示导航路径
 
 
 
@@ -591,6 +586,7 @@ const routes = [
           <el-breadcrumb-item v-if="$route.name !== 'Welcome'">{{ parentPathName }}</el-breadcrumb-item>
           <el-breadcrumb-item v-if="$route.name !== 'Welcome'">{{ curPathName }}</el-breadcrumb-item>
         </el-breadcrumb>
+        <!-- 默认显示欢迎页 -->
         <router-view />
       </el-main>
     </el-container>
@@ -600,11 +596,39 @@ const routes = [
 
 
 
-### 首页的样式
+> **注意：**
+>
+> `Menu` 组件需要设置 `router` 属性为 `true` 时，才能点击 `MenuItem` 组件的 `index` 属性跳转页面
+>
+> 当 Vue Loader 编译单文件组件中的 `<template>` 块时，它也会将所有遇到的资源 URL 转换为 **webpack 模块请求**。
+>
+> 使用 element-ui 的 `Image` 组件时，会出现以上情况，如果 `src` 直接输入静态路径。会导致图片显示不出来
 
-使用 sass 的 `@mixin` 和 `@include` 混入代码块，减少代码书写
+例如，下面的模板代码片段：
+
+```vue
+<img src="../image.png">
+```
+
+将会被编译成为：
+
+```js
+createElement('img', {
+  attrs: {
+    src: require('../image.png') // 现在这是一个模块的请求了
+  }
+})
+```
+
+示例[参考](https://vue-loader.vuejs.org/zh/guide/asset-url.html)
 
 
+
+#### 首页样式
+
+技术实现：
+
+- 使用 sass 的 `@mixin` 和 `@include` 混入代码块，减少代码书写
 
 ```vue
 <style lang="scss" scoped>
@@ -669,9 +693,17 @@ const routes = [
 
 
 
-### 实现首页的动态数据交互
+### 实现首页动态数据交互
 
-面包屑的动态匹配，利用当前 `$route` 的名字来判断当前的路由页，从而进行面包屑路径的匹配
+技术实现：
+
+- 面包屑的路径名动态匹配，利用当前 `$route.name` 判断当前的路由页，从而进行面包屑路径的匹配
+
+  ![breadcrumb](src/assets/i/indexPage-breadcrumb.png)
+
+  - 每个菜单高亮选项都是在一个分类选项卡的子页面，所以“文章列表”和 “文章发布”都会作为“文章管理”的子路径
+  - `parentPathName` 方法匹配并返回对应的父路径
+  - `curPathName` 方法则匹配并返回当前高亮的路径
 
 
 
@@ -727,32 +759,18 @@ export default {
 
 
 
-## <a href="#implementWelcomePage" id="implementWelcomePage">欢迎页的实现</a>
-
-### 添加欢迎页的路由
-
-给 `Index` 路由组件重定向到欢迎页，默认显示欢迎页
-
-```js
-// @/router/index.js
-const routes = [
-  {
-    name: 'Index',
-    path: '/(index|index.html)?',
-    redirect: '/index/welcome',
-    component: () => import(/* webpackChunkName: "index" */ '@/views/index'),
-    children: [
-      {
-        name: 'Welcome',
-        path: 'welcome',
-        component: () => import(/* webpackChunkName: "index" */ '@/views/index/Welcome.vue')
-      },
-  // ...
-```
 
 
+### 欢迎页的实现
 
-### 简单实现欢迎页
+[@/views/index/Welcome.vue](src/views/index/Welcome.vue)
+
+技术实现：
+
+- `Container` 组件布局
+- `Image` 组件显示图片
+- 动态导入图片 `require('@/assets/logo.png')`
+- 从本地存储取用户名
 
 ```vue
 <template>

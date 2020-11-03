@@ -115,8 +115,8 @@ export default {
       isIndeterminate: true,
       categories: [],
       checkedCategories: [],
-      dialogImageUrl: '', // ***
-      dialogVisible: false // ***
+      dialogImageUrl: '', // TODO
+      dialogVisible: false // TODO
     }
   },
   methods: {
@@ -168,8 +168,6 @@ export default {
   },
   async mounted () {
     const [cateErr, cateRes] = await this.$api.getCategory()
-
-    console.log(this.$route.params)
 
     if (cateErr) {
       return this.$message.error('获取栏目数据出错')

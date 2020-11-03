@@ -31,7 +31,7 @@
             <i class="el-icon-notebook-2"></i>
             <span>文章管理</span>
           </template>
-          <el-menu-item route index="/index/articleList">
+          <el-menu-item index="/index/articleList">
             <span>文章列表</span>
           </el-menu-item>
           <el-menu-item index="/index/articlePublish">
@@ -77,8 +77,7 @@ export default {
     const nickname = JSON.parse(localStorage.getItem('heimatoutiao_admin_userInfo')).nickname
 
     return {
-      nickname,
-      articleId: ''
+      nickname
     }
   },
   methods: {
@@ -114,14 +113,7 @@ export default {
           return '栏目列表'
       }
     }
-  },
-  // beforeRouteUpdate (to, from, next) {
-  //   console.log(this.$route.path)
-  //   if (to.name === 'ArticlePublish') {
-  //     this.articleId = to.params.id
-  //   }
-  //   next()
-  // }
+  }
 }
 </script>
 
