@@ -24,8 +24,23 @@ const publishArticle = data => axios.post('/post', data).then(res => [null, res]
 
 const getArticleById = id => axios.get(`/post/${id}`).then(res => [null, res]).catch(err => [err])
 
+/**
+ * 编辑文章
+ * @param {number} id 文章 id
+ * @param {Object} data 参数
+ * @param {string} data.title 文章标题
+ * @param {string} data.content 文章内容
+ * @param {Array<Object>} data.categories 所属栏目ID集合
+ * @param {Array<Object>} data.cover 封面图片ID集合
+ * @param {number} data.type 1为文章，2为视频
+ * @param {number} data.open 1为打开，0为关闭
+ * @returns {Promise<Response>}
+ */
+const editArticleById = (id, data) => axios.post(`/post_update/${id}`, data).then(res => [null, res]).catch(err => [err])
+
 export default {
   getArticle,
   publishArticle,
-  getArticleById
+  getArticleById,
+  editArticleById
 }

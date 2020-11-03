@@ -10,8 +10,23 @@
           <el-radio :label="2">视频</el-radio>
         </el-radio-group>
       </el-form-item>
-      <el-form-item v-if="article.type === 1" label="内容：">
-        <VueEditor :config="articleEditorConfig" ref="articleEditor" />
+      <el-form-item label="内容：">
+        <VueEditor v-if="article.type === 1" :config="articleEditorConfig" ref="articleEditor" />
+        <el-upload
+          v-if="article.type === 2"
+          :action="uploadURL"
+          :headers="getToken()"
+          :limit="1"
+          :file-list="videoList"
+          :before-upload="handleBeforeUploadVideo"
+          :on-success="handleUploadVideoSuccess"
+          :on-exceed="handleUploadVideoExceed"
+          :on-remove="handleUploadVideoRemove"
+          :on-error="handleUploadVideoError"
+        >
+          <el-button size="small" type="primary">点击上传</el-button>
+          <div slot="tip">只能上传avi/mp4文件，且不超过80M</div>
+        </el-upload>
       </el-form-item>
       <el-form-item label="栏目：">
           <el-checkbox
@@ -30,18 +45,22 @@
       </el-form-item>
       <el-form-item label="上传封面：">
         <el-upload
-          :action="uploadURL"
           list-type="picture-card"
+          multiple
+          :action="uploadURL"
           :headers="getToken()"
-          :on-success="handleUploadSuccess"
-          :on-remove="handleUploadRemove"
-          :on-error="handleUploadError"
+          :limit="3"
+          :file-list="article.cover"
+          :on-preview="handleCoverPreview"
+          :on-success="handleUploadCoverSuccess"
+          :on-remove="handleUploadCoverRemove"
+          :on-exceed="handleUploadCoverExceed"
+          :on-error="handleUploadCoverError"
         >
           <i class="el-icon-plus"></i>
-          <div slot="tip" class="el-upload__tip">只能上传视频文件</div>
         </el-upload>
-        <el-dialog :visible.sync="dialogVisible">
-          <img width="100%" :src="dialogImageUrl" alt="">
+        <el-dialog :visible.sync="coverImageVisible">
+          <img width="100%" :src="coverImageUrl" alt="图片预览">
         </el-dialog>
       </el-form-item>
       <el-form-item>
@@ -115,8 +134,10 @@ export default {
       isIndeterminate: true,
       categories: [],
       checkedCategories: [],
-      dialogImageUrl: '', // TODO
-      dialogVisible: false // TODO
+      videoList: [],
+      videoType: ['video/avi', 'video/mp4'],
+      coverImageUrl: '', // 封面图片预览
+      coverImageVisible: false // 封面图片预览是否可见
     }
   },
   methods: {
@@ -134,51 +155,169 @@ export default {
       this.checkAll = checkedCount === this.categories.length
       this.isIndeterminate = checkedCount > 0 && checkedCount < this.categories.length
     },
-    handleUploadSuccess (res, file) {
-      this.$message.success(res.message)
-      const id = res.data.id
-      this.article.cover.push({ id })
+    handleBeforeUploadVideo (file) {
+      if (this.videoType.indexOf(file.type) === -1) {
+        this.$message.warning('类型不对')
+        return false
+      } else if (file.size / 1024 / 1024 > 80) {
+        this.$message.warning('文件太大')
+        return false
+      }
     },
-    handleUploadRemove (file) {
-      const removeId = file.response.data.id
+    handleUploadVideoSuccess (res, file, fileList) {
+      if (res.statusCode) {
+        return this.$message.error('上传文件失败')
+      }
+
+      this.$message.success(res.message)
+      this.article.content = this.baseURL + res.data.url
+    },
+    handleUploadVideoExceed () {
+      this.$message.warning('只能上传一个')
+    },
+    handleUploadVideoRemove () {
+      this.article.content = ''
+    },
+    handleUploadVideoError () {
+      this.$message.error('上传文件出错')
+    },
+    handleCoverPreview (file) {
+      this.coverImageUrl = file.url;
+      this.coverImageVisible = true;
+    },
+    handleUploadCoverSuccess (res, file) {
+      const url = this.baseURL + res.data.url
+      const id = res.data.id
+      this.article.cover.push({ id, url })
+      this.$message.success(res.message)
+    },
+    handleUploadCoverRemove (file) {
+      let removeId
+      if (this.$route.params.id) {
+        removeId = file.id
+      } else {
+        removeId = file.response.data.id
+      }
       // 返回 id 不等于当前的这个图片 id 的数组
       this.article.cover = this.article.cover.filter(v => v.id !== removeId)
     },
-    handleUploadError () {
+    handleUploadCoverExceed () {
+      this.$message.warning('最多只能上传三张封面')
+    },
+    handleUploadCoverError () {
       this.$message.error('上传封面失败')
     },
     async publishArticle () {
+      if (this.$route.params.id) {
+        // 编辑文章
+        this.article.categories = this.checkedCategories.map(id => ({ id }))
+        this.article.cover = this.article.cover.map(({ id }) => ({ id }))
+
+        const { title, content, categories, type, open, cover } = this.article
+
+        const [err, res] = await this.$api.editArticleById(this.$route.params.id, {
+          title,
+          content,
+          categories,
+          cover,
+          type,
+          open
+        })
+
+        if (err) {
+          return this.$message.error('编辑文章失败，发生错误')
+        } else if (res.data.statusCode) {
+          return this.$message.error('编辑文章失败' + res.data.message)
+        }
+        this.$message.success(res.data.message)
+        this.$router.push('/index/articleList')
+      } else {
+        // 发布文章
+        if (this.article.type === 1) {
+          // 获取富文本内容
+          this.article.content = this.$refs.articleEditor.editor.root.innerHTML
+        }
+        this.article.categories = this.checkedCategories.map(id => ({ id }))
+
+        [err, res] = await this.$api.publishArticle(this.article)
+
+        if (err) {
+          return this.$message.error('发布文章失败，发生错误')
+        } else if (res.data.statusCode) {
+          return this.$message.error('发布文章失败' + res.data.message)
+        }
+        this.$message.success(res.data.message)
+        this.$router.push('/index/articleList')
+      }
+    },
+    // 初始化栏目
+    async initCate () {
+      const [cateErr, cateRes] = await this.$api.getCategory()
+
+      if (cateErr) {
+        return this.$message.error('获取栏目数据出错')
+      }
+      // 去掉关注和头条两项
+      const cateData = cateRes.data.data.filter(({ name, id }) => (
+        id !== 999 && id !== 0 && name !== '头条' && name !== '关注'
+      ))
+
+      this.categories = cateData
+    },
+
+    async initArticle () {
+      const articleId = this.$route.params.id
+
+      if (!articleId) {
+        return
+      }
+
+      const [articleErr, articleRes] = await this.$api.getArticleById(articleId)
+
+      if (articleErr) {
+        return this.$message.error('获取文章数据出错')
+      }
+
+      // 初始化文章数据
+      this.article = articleRes.data.data
+
       if (this.article.type === 1) {
-        // 获取富文本内容
-        this.article.content = this.$refs.articleEditor.editor.root.innerHTML
-      }
-      this.article.categories = this.checkedCategories.map(id => ({ id }))
-
-      const [err, res] = await this.$api.publishArticle(this.article)
-
-      if (err) {
-        return this.$message.error('发布文章失败，发生错误')
-      } else if (res.data.statusCode) {
-        return this.$message.error('发布文章失败' + res.data.message)
+        // 初始化富文本框
+        this.$refs.articleEditor.editor.clipboard.dangerouslyPasteHTML(0, this.article.content)
+      } else {
+        // 初始化视频数据
+        this.videoList = [{ name: this.article.title, url: this.article.content }]
       }
 
-      this.$message.success(res.data.message)
-      this.$router.push('/articleList')
+      // 改造文章栏目数据，返回一个 id 对象数组
+      this.article.categories = this.article.categories.map(({ id }) => ({ id }))
+
+      // 初始化栏目数据
+      this.checkedCategories = this.article.categories.map(v => v.id)
+
+      // 改造封面数据，删除 uid 属性
+      this.article.cover = this.article.cover.map(({id, url}) => {
+        url = url.indexOf('http') === -1 ? this.baseURL + url : url
+        return {
+          id,
+          url
+        }
+      })
+
+      // note: 由于响应返回的数据中 cover 字段存在一个 uid 的属性，两个 uid 相同，导致
+      // Upload 组件发生冲突，从而报错
+      // cover.forEach(v => {
+      //   if (v.url.indexOf('http') === -1) {
+      //     v.url = this.baseURL + v.url
+      //   }
+      // })
+      // this.article.cover = cover
     }
   },
-  async mounted () {
-    const [cateErr, cateRes] = await this.$api.getCategory()
-
-    if (cateErr) {
-      return this.$message.error('获取栏目数据出错')
-    }
-
-    // 去掉关注和头条两项
-    const cateData = cateRes.data.data.filter(({ name, id }) => (
-      id !== 999 && id !== 0 && name !== '头条' && name !== '关注'
-    ))
-
-    this.categories = cateData
+  mounted () {
+    this.initArticle().then(() => {
+      this.initCate()
+    })
   }
 }
 </script>

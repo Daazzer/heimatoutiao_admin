@@ -107,11 +107,11 @@ export default {
       this.articlesData = articlesData
       this.total = total
     },
-    handleSizeChange(pageSize) {
+    handleSizeChange (pageSize) {
       this.pageSize = pageSize
       this.getArticle(this.pageIndex, pageSize)
     },
-    handleCurrentChange(pageIndex) {
+    handleCurrentChange (pageIndex) {
       this.pageIndex = pageIndex
       this.getArticle(pageIndex, this.pageSize)
     },
@@ -135,7 +135,7 @@ export default {
 </script>
 
 <style lang="scss">
-// 影响全局的提示影响
+// 影响全局的提示信息
 .articlelist-opt__tips {
   padding: 3px 5px;
 }
@@ -150,5 +150,4 @@ export default {
     margin-bottom: 20px;
   }
 }
-
 </style>
