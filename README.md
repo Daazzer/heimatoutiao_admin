@@ -1501,5 +1501,234 @@ this.article.cover = cover
     ```
 
     
-    
-    
+
+# Vue 项目的打包上线以及优化
+
+项目完成，我们会将项目进行上线，同时为了提升性能，我们往往会进行一些优化处理
+
+
+
+## vue项目的打包
+
+vue 项目中的
+
+```powershell
+npm run build
+# 实际上运行 vue 的
+vue-cli-service build
+```
+
+
+
+执行命令后，会在当前项目的根目录下生成一个dist文件夹，里面就是打包后的文件
+
+[参考](https://cli.vuejs.org/zh/guide/cli-service.html#vue-cli-service-build)
+
+
+
+## 项目托管
+
+我们可以创建一个简易的node服务器来托管打包后的项目，这样就可以模拟访问服务器的项目
+
+一个 node 简易服务器目录
+
+### 服务器目录
+
+![node-serve-1](src/assets/i/node-serve-1.png)
+
+
+
+![node-serve-2](src/assets/i/node-serve-2.png)
+
+### 启动服务器
+
+```powershell
+npm start
+# or
+node app.js
+```
+
+
+
+## 项目的常见优化
+
+- 项目打包之后，会将之前所使用到的部署依赖包和项目中使用到的外部资源都打包
+
+- 如果之前引入的包很多，或者引入的不必需的包，那么会增大项目的体积，从而造成用户访问的时候需要请求更多的数据才能正常的访问，不利于用户体验，所以需要对打包过程进行优化
+
+- 一般情况下我们可以从优化代码的方面对项目进行优化，也可以使用类似 cdn 的方式对项目进行优化
+
+- 脚手架中提供了一个命令，可以让我们看到项目的资源的分布(占用)情况：
+
+  ```powershell
+  npm run build -- --report
+  # 注意，这里相当于运行了 @vue/cli 的
+  vue-cli-service build --report
+  ```
+
+  - `npm run <command> [--silent] [-- <args>...]` 是 `npm` 内置语法
+  - [@vue/cli 参考](https://cli.vuejs.org/zh/guide/cli-service.html#vue-cli-service-build)
+  - [npm cli 参考](https://docs.npmjs.com/cli/v6/commands/npm-run-script)
+
+### 生成项目报告文件
+
+```powershell
+npm run build -- --report
+```
+
+![报告文件](src/assets/i/dist-report.png)
+
+
+
+
+
+项目文件大小占比统计图
+
+- 报告页面中，越大的块说明这个模板占用的体积越大
+- 占用体积越越大的模块，我们要考虑将其打包到产品中
+
+![project-statistics](src/assets/i/project-statistics.png)
+
+
+
+### CDN 加速优化
+
+我们可以将一些大体积的模块，让 CDN 帮我们提供相应的公共大型的资源，这样就可以缓解我们自己的服务器的压力，同时提供更快更好的资源响应
+
+#### Vue 的 webpack 相关配置
+
+##### 添加包的排除
+
+在项目根目录添加 **vue.config.js**
+
+[@vue/cli 参考](https://cli.vuejs.org/zh/guide/webpack.html#%E7%AE%80%E5%8D%95%E7%9A%84%E9%85%8D%E7%BD%AE%E6%96%B9%E5%BC%8F)
+
+`externals` 表示排除项，对应的依赖映射需要到对应的官网上查
+
+```js
+module.exports = {
+    configureWebpack: {
+        externals:{
+            'vue': 'Vue',
+            'element-ui': 'ELEMENT',
+            'quill': 'Quill'
+        }
+    },
+}
+```
+
+
+
+![project-statistics-min](src/assets/i/project-statistics-min.png)
+
+排除后项目体积减少，但是，由于没有这些包，打包后的项目并不能运行
+
+
+
+##### 添加 CDN 的用户自定义
+
+在 **vue.config.js** 中添加
+
+```js
+let cdn = {
+  css: [
+    // element-ui css
+    'https://unpkg.com/element-ui/lib/theme-chalk/index.css',// 样式表
+    // 富文本框插件样式
+    'https://cdn.bootcdn.net/ajax/libs/quill/2.0.0-dev.4/quill.bubble.css'
+  ],
+  js: [
+    // vue must at first!
+    'https://unpkg.com/vue/dist/vue.js', // vuejs
+    // element-ui js
+    'https://unpkg.com/element-ui/lib/index.js', // elementUI
+    // 富文本框插件
+    'https://cdn.bootcdn.net/ajax/libs/quill/2.0.0-dev.4/quill.js'
+  ]
+}
+
+let externals = {
+  'vue': 'Vue',
+  'element-ui': 'ELEMENT',
+  'quill': 'Quill'
+}
+```
+
+
+
+##### 通过插件将资源自动的添加到页面中
+
+##### 挂载资源到插件
+
+```js
+module.exports = {
+  // 添加打包排除，说明以下配置中的包将来不会打包到项目中
+  configureWebpack: {
+    externals
+  },
+  // 将 cdn 的资源挂载到插件上
+  chainWebpack (config) {
+    config.plugin('html').tap(args => {
+      args[0].cdn = cdn
+      return args
+    })
+  }
+}
+```
+
+
+
+##### 在页面中使用插件添加指定的 CDN 资源
+
+在 [@/public/index.html](src/public/index.html) 中
+
+- 添加 css 引入 `<head>` 中
+
+  ```html
+  <% for(var css of htmlWebpackPlugin.options.cdn.css) { %>
+    <link rel="stylesheet" href="<%=css%>" />
+  <% } %>
+  ```
+
+- 添加 js 引入`<body>` 中
+
+  ```html
+  <% for(var js of htmlWebpackPlugin.options.cdn.js) { %>
+    <script src="<%=js%>"></script>
+  <% } %>
+  ```
+
+- 重新打包
+
+
+
+##### 添加环境判断
+
+- 在项目开发的时候，其实没有必要使用cdn,这样反而会让我们的页面加载效率下降，同时也不适合本地开发(需要连网)
+- 我们可以根据环境变量进行相应的处理，只有在产品的时候，才让插件去自动注入相应的资源文件到 html 页面
+
+判断是否为生产环境，如果是则使用 CDN，否则使用本地依赖
+
+在 **vue.config.js** 中添加
+
+```js
+const isProd = process.env.NODE_ENV === 'production' // 是否生产环境
+
+// ...
+
+cdn = isProd ? cdn : { css: [], js: [] }
+externals = isProd ? externals : {}
+
+// ...
+```
+
+
+
+这样，打包后的产品体积变小了也能正常访问了
+
+![cdn-project-statistics](src/assets/i/cdn-project-statistics.png)
+
+
+
+![cdn-client](src/assets/i/cdn-client.png)
+
