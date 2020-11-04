@@ -252,8 +252,6 @@ const routes = [
 
 - 使用 element-ui 的 `Container`、`Form`、`Avatar`、`FormItem`、`Input` 组件
 
-
-
 ```vue
 <template>
   <el-container class="login">
@@ -880,94 +878,67 @@ const routes = [
 
 #### 文章列表页模板
 
+[@/views/articleList.vue](src/views/articleList.vue)
+
 技术实现：
 
 - `Container` 、`Card` 组件布局
 - `Table` 、`TableColumn` 组件存储 api  获取的数据
+  
   - `Table`、`TableColumn` 组件是不用遍历生成数据的，所以要使用 `TableColumn` 的作用域插槽，获取添加到表格中的数据
+  
   - 类型数据列由于获取的是数值，所以利用作用域插槽来获取数据，进行数据转换，1 为文章，2 为视频
+  
+    ```vue
+    <template>
+      <el-container class="articlelist">
+        <el-card class="articlelist-wrapper">
+        		<!--
+    					...
+    				-->
+            <!-- 可以用最简洁的作用域插槽的语法，作用域插槽的独占写法 -->
+            <el-table-column v-slot="scope" class="articlelist-opt" label="操作" width="180">
+              <el-tooltip
+                popper-class="articlelist-opt__tips"
+                content="编辑"
+                placement="bottom"
+                effect="light"
+                :open-delay="800"
+                :visible-arrow="false"
+               >
+                <el-button
+                  size="medium"
+                  icon="el-icon-edit"
+                  type="primary"
+                  @click="handleEdit(scope.row)"
+                />
+              </el-tooltip>
+              <el-tooltip
+                popper-class="articlelist-opt__tips"
+                content="删除"
+                placement="bottom"
+                :open-delay="800"
+                effect="light"
+                :visible-arrow="false"
+              >
+                <el-button
+                  size="medium"
+                  icon="el-icon-delete"
+                  type="danger"
+                  @click="handleDelete(scope.row)"
+                />
+              </el-tooltip>
+            </el-table-column>
+          	<!--
+    					...
+    				-->
+        </el-card>
+      </el-container>
+    </template>
+    ```
 - `Button` 组件实现编辑和删除按钮
 - 由于使用了图标按钮，需要使用 `ToolTip` 组件进行按钮的文字提示信息
 - `Pagination` 组件实现分页效果，可选每页数据条数为 2,4,6,8
-
-```vue
-<template>
-  <el-container class="articlelist">
-    <el-card class="articlelist-wrapper">
-      <el-table
-        class="articlelist-table"
-        :data="articlesData"
-        border
-        style="width: 100%"
-      >
-        <el-table-column
-          type="index"
-          width="60"
-        />
-        <el-table-column
-          prop="title"
-          label="标题"
-        />
-        <el-table-column
-          v-slot="scope"
-          prop="type"
-          label="类型"
-          width="120"
-        >
-          {{ scope.row.type === 1 ? '文章' : '视频' }}
-        </el-table-column>
-        <el-table-column
-          prop="user.nickname"
-          label="作者"
-          width="210"
-        />
-        <!-- 可以用最简洁的作用域插槽的语法，作用域插槽的独占写法 -->
-        <el-table-column v-slot="scope" class="articlelist-opt" label="操作" width="180">
-          <el-tooltip
-            popper-class="articlelist-opt__tips"
-            content="编辑"
-            placement="bottom"
-            effect="light"
-            :open-delay="800"
-            :visible-arrow="false"
-           >
-            <el-button
-              size="medium"
-              icon="el-icon-edit"
-              type="primary"
-              @click="handleEdit(scope.row)"
-            />
-          </el-tooltip>
-          <el-tooltip
-            popper-class="articlelist-opt__tips"
-            content="删除"
-            placement="bottom"
-            :open-delay="800"
-            effect="light"
-            :visible-arrow="false"
-          >
-            <el-button
-              size="medium"
-              icon="el-icon-delete"
-              type="danger"
-              @click="handleDelete(scope.row)"
-            />
-          </el-tooltip>
-        </el-table-column>
-      </el-table>
-      <el-pagination
-        :current-page="pageIndex"
-        :page-size="pageSize"
-        :page-sizes="[2, 4, 6, 8]"
-        :total="total"
-        layout="total, sizes, prev, pager, next, jumper"
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"
-      />
-    </el-card>
-  </el-container>
-</template>
-```
 
 
 
@@ -978,23 +949,18 @@ const routes = [
 - `Tooptip` 组件默认是 `<body>` 的子元素，所以要用到全局样式
 
 ```vue
+<!--
+	...
+-->
 <style lang="scss">
 // 影响全局的提示信息
 .articlelist-opt__tips {
   padding: 3px 5px;
 }
 </style>
-
-<style lang="scss" scoped>
-.articlelist {
-  &-wrapper {
-    width: 100%;
-  }
-  &-table {
-    margin-bottom: 20px;
-  }
-}
-</style>
+<!--
+	...
+-->
 ```
 
 
@@ -1499,6 +1465,8 @@ this.article.cover = cover
 
 - 进入文章编辑页之后，由于组件的复用，路由在 `/index/articlePublish` 和 `/index/articlePublish/:id` 之间切换的话组件不会卸载，这时会导致路由变化了，数据还是上一个页面的状态，为了解决这个问题，同时不刷新页面影响体验，则需要卸载组件来刷新数据解决这个问题
 
+  - [@/views/index/index.vue](src/views/index/index.vue)
+
   - 需要在 `Index` 组件对路由视图进行卸载
 
   - 在 `<router-view />` 添加 `v-if` 进行卸载
@@ -1523,6 +1491,7 @@ this.article.cover = cover
   - 并且在 `Index` 的 `beforeRouteUpdate` 钩子进行路由判断
 
     ```js
+    // ...
     beforeRouteUpdate (to, from, next) {
       if (to.name === 'ArticlePublish') {
         this.isAlive = false
@@ -1530,6 +1499,7 @@ this.article.cover = cover
       }
       next()
     }
+    // ...
     ```
 
     
