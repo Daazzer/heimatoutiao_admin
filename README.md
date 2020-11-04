@@ -30,7 +30,7 @@
   ```powershell
   src
   ├─api # 项目服务器 api
-  ├─assets
+  ├─assets # 静态资源目录
   │  └─fonts
   ├─components # 项目封装的组件
   ├─router # 视图路由
@@ -76,8 +76,8 @@ npm run build
 
 ```json
 {
-    "javascript.format.insertSpaceBeforeFunctionParenthesis": true,
-    "javascript.format.semicolons": "remove"
+  "javascript.format.insertSpaceBeforeFunctionParenthesis": true,
+  "javascript.format.semicolons": "remove"
 }
 ```
 
@@ -180,14 +180,14 @@ Vue.prototype.$api = api
 
 项目路由配置：[@/router](src/router)
 
-| URL                         | 描述                      |
-| --------------------------- | ------------------------- |
-| `/login`                    | [登录页](#LoginPage)      |
-| `/index/welcome`            | 欢迎页                    |
-| `/index/articleList`        | 文章列表页                |
-| `/index/articlePublish`     | 文章发布页                |
-| `/index/articlePublish/:id` | 文章编辑页                |
-| `*`                         | [404 页面](#NotFoundPage) |
+| URL                         | 描述                              |
+| --------------------------- | --------------------------------- |
+| `/login`                    | [登录页](#LoginPage)              |
+| `/index/welcome`            | [欢迎页](#IndexWelcomePage)       |
+| `/index/articleList`        | [文章列表页](#articleListPage)    |
+| `/index/articlePublish`     | [文章发布页](#articlePublishPage) |
+| `/index/articlePublish/:id` | [文章编辑页](#articlePublishPage) |
+| `*`                         | [404 页面](#NotFoundPage)         |
 
 
 
@@ -500,17 +500,23 @@ router.beforeEach((to, from, next) => {
 ```js
 // ...
 const routes = [
+  {
     name: 'Index',
     path: '/(index|index.html)?',
     redirect: '/index/welcome',
     component: () => import(/* webpackChunkName: "index" */ '@/views/index'),
     children: [
-      {
+			{
         name: 'Welcome',
         path: '/index/welcome',
         component: () => import(/* webpackChunkName: "index" */ '@/views/index/Welcome.vue')
-      },
+			},
+  	// ...
+  	]
+	}
   // ...
+]
+// ...
 ```
 
 
@@ -915,7 +921,7 @@ const routes = [
           label="作者"
           width="210"
         />
-        <!-- 可以用最简洁的作用域插槽的语法 -->
+        <!-- 可以用最简洁的作用域插槽的语法，作用域插槽的独占写法 -->
         <el-table-column v-slot="scope" class="articlelist-opt" label="操作" width="180">
           <el-tooltip
             popper-class="articlelist-opt__tips"
@@ -1066,15 +1072,15 @@ export default {
 
 
 
-## 文章发布页的实现
+## <a href="#articlePublishPage" id="articlePublishPage">文章发布与文章编辑的实现</a>
 
-### 添加文章发布页路由
+### 添加文章发布与文章编辑路由
 
 [@/router](src/router)
 
 技术实现：
 
-- 路由参数 `:id` 为了后续的文章编辑页复用
+- 路由参数 `:id` 为了后续的文章编辑复用
 
 ```js
 // ...
@@ -1100,15 +1106,23 @@ const routes = [
 
 
 
-### 实现文章发布页视图结构
+### 视图结构
 
-#### 文章发布页效果图
+#### 文章发布状态效果图
 
-![文章发布页](src/assets/i/articlePublishPage.png)
+![文章发布](src/assets/i/articlePublishPage.png)
 
 
 
-#### 文章发布页模板
+#### 文章编辑状态效果图
+
+![文章编辑状](src/assets/i/editArticlePage.png)
+
+
+
+#### 文章发布与文章编辑模板
+
+[@/views/articlePublish](src/views/articlePublish)
 
 实现技术：
 
@@ -1166,6 +1180,7 @@ const routes = [
           </el-checkbox-group>
       </el-form-item>
       <el-form-item label="上传封面：">
+        <!-- 添加 multiple 属性进行文件多选 -->
         <el-upload
           list-type="picture-card"
           multiple
@@ -1181,6 +1196,7 @@ const routes = [
         >
           <i class="el-icon-plus"></i>
         </el-upload>
+        <!-- 图片预览对话框 -->
         <el-dialog :visible.sync="coverImageVisible">
           <img width="100%" :src="coverImageUrl" alt="图片预览">
         </el-dialog>
@@ -1199,7 +1215,7 @@ const routes = [
 
 
 
-#### 文章发布页样式
+#### 文章发布与文章编辑样式
 
 富文本框的样式
 
@@ -1211,7 +1227,7 @@ const routes = [
 
 
 
-#### 文章发布页动态数据交互
+#### 文章发布与文章编辑动态数据交互
 
 技术实现：
 
@@ -1219,14 +1235,12 @@ const routes = [
 
 - `article.type` 编辑类型单选按钮
 
-- `articleEditorConfig` [VueWordEditor](https://github.com/hsian/vue-word-editor) 组件配置，通过其 `uploadImage` 与 `uploadVideo` 对象的钩子函数进行内容文件上传
+- `articleEditorConfig` [VueWordEditor](https://github.com/hsian/vue-word-editor) 组件配置，通过其 `uploadImage` 与 `uploadVideo` 配置对象的钩子函数进行内容文件上传
 
-  - 由于在 `uploadSuccess` 钩子函数上传文件不经过 `axios` 所以，要另外设置请求 `headers`
-
-  例如：
+  - 由于在 `uploadSuccess` 钩子函数上传文件不经过 `axios` 。所以，要另外设置请求 `headers`
 
   ```js
-  /*
+/*
   图片上传 api 在 VueEditor 中自己封装了，所以这里不使用 axios 发请求
   意味着不经过请求拦截器，请求头要自己另外封装
    */
@@ -1236,275 +1250,288 @@ const routes = [
     headers: this.getToken(),
     // 使用箭头函数目的是让 `this` 访问组件实例
     uploadSuccess: (res, insert) => {
-    try {
-      // res是结果，insert方法会把内容注入到编辑器中，res.data.url是资源地址
-  	insert(baseURL + res.data.data.url)
-  	} catch (error) {
-  	  this.$message.error('上传文件失败，发生错误')
-  	}
+      try {
+        // res是结果，insert方法会把内容注入到编辑器中，res.data.url是资源地址
+      insert(baseURL + res.data.data.url)
+      } catch (error) {
+        this.$message.error('上传文件失败，发生错误')
+      }
     }
   },
   // ...
   ```
-
+  
 - 通过单选按钮，进行文章类型选择
 
 - 通过复选框，选择多个文章类别
 
-- 封面上传
+- 如果选择类别为视频，则隐藏富文本框，通过 `Upload` 组件的 `on-success` 属性回调 `handleBeforeUploadVideo` 上传视频
 
   - 检测文件类型
-  - 限制上传文件大小
+  - 限制上传文件大小，限制在 80M
 
-
-
-```vue
-<script>
-import VueEditor from 'vue-word-editor'
-import axios from '@/utils/axios_http-config'
-
-export default {
-  name: 'ArticlePublish',
-  components: {
-    VueEditor
-  },
-  data () {
-    const baseURL = axios.defaults.baseURL
-    const uploadURL = baseURL + '/upload'
-    return {
-      labelPosition: 'right',
-      baseURL: axios.defaults.baseURL,
-      uploadURL,
-      article: {
-        title: '',
-        type: 1,
-        content: '',
-        cover: [],
-        categories: []
-      },
-      articleEditorConfig: {
-        /*
-        图片上传 api 在 VueEditor 中自己封装了，所以这里不使用 axios 发请求
-        意味着不经过请求拦截器，请求头要自己另外封装
-         */
-        uploadImage: {
-          url: uploadURL,
-          name: 'file',
-          headers: this.getToken(),
-          // 使用箭头函数目的是让 `this` 访问组件实例
-          uploadSuccess: (res, insert) => {
-            try {
-              // res是结果，insert方法会把内容注入到编辑器中，res.data.url是资源地址
-              insert(baseURL + res.data.data.url)
-            } catch (error) {
-              this.$message.error('上传文件失败，发生错误')
-            }
-          }
-        },
-        // 上传视频
-        uploadVideo: {
-          url: uploadURL,
-          name: 'file',
-          headers: this.getToken(),
-          uploadSuccess: (res, insert) => {
-            try {
-              insert(baseURL + res.data.data.url)
-            } catch (error) {
-              this.$message.error('上传文件失败，发生错误')
-            }
-          }
+  ```vue
+  <script>
+  import VueEditor from 'vue-word-editor'
+  import axios from '@/utils/axios_http-config'
+  
+  export default {
+    // ...
+    methods: {
+      // ...
+      handleBeforeUploadVideo (file) {
+        if (this.videoType.indexOf(file.type) === -1) {
+          this.$message.warning('类型不对')
+          return false
+        } else if (file.size / 1024 / 1024 > 80) {
+          this.$message.warning('文件太大')
+          return false
         }
       },
-      checkAll: false,
-      isIndeterminate: true,
-      categories: [],
-      checkedCategories: [],
-      videoList: [],
-      videoType: ['video/avi', 'video/mp4'],
-      coverImageUrl: '', // 封面图片预览
-      coverImageVisible: false // 封面图片预览是否可见
-    }
-  },
-  methods: {
-    getToken () {
-      const token = JSON.parse(localStorage.getItem('heimatoutiao_admin_userInfo')).token
-      return { Authorization : token }
+   	// ...
     },
-    handleCheckAllChange (isCheckAll) {
-      this.checkedCategories = isCheckAll ? this.categories.map(v => v.id) : []
-      this.isIndeterminate = false
-    },
-    handleCheckedCategoriesChange (checkedCategories) {
-      let checkedCount = checkedCategories.length
-      // 判断是否全选了
-      this.checkAll = checkedCount === this.categories.length
-      this.isIndeterminate = checkedCount > 0 && checkedCount < this.categories.length
-    },
-    handleBeforeUploadVideo (file) {
-      if (this.videoType.indexOf(file.type) === -1) {
-        this.$message.warning('类型不对')
-        return false
-      } else if (file.size / 1024 / 1024 > 80) {
-        this.$message.warning('文件太大')
-        return false
-      }
-    },
-    handleUploadVideoSuccess (res, file, fileList) {
-      if (res.statusCode) {
-        return this.$message.error('上传文件失败')
-      }
+    // ...
+  }
+  </script>
+  ```
 
-      this.$message.success(res.message)
-      this.article.content = this.baseURL + res.data.url
-    },
-    handleUploadVideoExceed () {
-      this.$message.warning('只能上传一个')
-    },
-    handleUploadVideoRemove () {
-      this.article.content = ''
-    },
-    handleUploadVideoError () {
-      this.$message.error('上传文件出错')
-    },
-    handleCoverPreview (file) {
-      this.coverImageUrl = file.url;
-      this.coverImageVisible = true;
-    },
-    handleUploadCoverSuccess (res, file) {
-      const url = this.baseURL + res.data.url
-      const id = res.data.id
-      this.article.cover.push({ id, url })
-      this.$message.success(res.message)
-    },
-    handleUploadCoverRemove (file) {
-      let removeId
-      if (this.$route.params.id) {
-        removeId = file.id
-      } else {
-        removeId = file.response.data.id
-      }
-      // 返回 id 不等于当前的这个图片 id 的数组
-      this.article.cover = this.article.cover.filter(v => v.id !== removeId)
-    },
-    handleUploadCoverExceed () {
-      this.$message.warning('最多只能上传三张封面')
-    },
-    handleUploadCoverError () {
-      this.$message.error('上传封面失败')
-    },
-    async publishArticle () {
-      if (this.$route.params.id) {
-        // 编辑文章
-        this.article.categories = this.checkedCategories.map(id => ({ id }))
-        this.article.cover = this.article.cover.map(({ id }) => ({ id }))
+  
 
-        const { title, content, categories, type, open, cover } = this.article
+- 封面上传
 
-        const [err, res] = await this.$api.editArticleById(this.$route.params.id, {
-          title,
-          content,
-          categories,
-          cover,
-          type,
-          open
-        })
+  - `Upload` 组件的 `on-preview` 调用 `handleCoverPreview` 回调封面预览
 
-        if (err) {
-          return this.$message.error('编辑文章失败，发生错误')
-        } else if (res.data.statusCode) {
-          return this.$message.error('编辑文章失败' + res.data.message)
+  ```vue
+  <script>
+  import VueEditor from 'vue-word-editor'
+  import axios from '@/utils/axios_http-config'
+  
+  export default {
+    // ...
+    methods: {
+      // ...
+      handleCoverPreview (file) {
+        this.coverImageUrl = file.url;
+        this.coverImageVisible = true;
+      },
+      handleUploadCoverSuccess (res, file) {
+        const url = this.baseURL + res.data.url
+        const id = res.data.id
+        this.article.cover.push({ id, url })
+        this.$message.success(res.message)
+      },
+      handleUploadCoverRemove (file) {
+        let removeId
+        if (this.$route.params.id) {
+          removeId = file.id
+        } else {
+          removeId = file.response.data.id
         }
-        this.$message.success(res.data.message)
-        this.$router.push('/index/articleList')
-      } else {
-        // 发布文章
-        if (this.article.type === 1) {
-          // 获取富文本内容
-          this.article.content = this.$refs.articleEditor.editor.root.innerHTML
-        }
-        this.article.categories = this.checkedCategories.map(id => ({ id }))
-
-        [err, res] = await this.$api.publishArticle(this.article)
-
-        if (err) {
-          return this.$message.error('发布文章失败，发生错误')
-        } else if (res.data.statusCode) {
-          return this.$message.error('发布文章失败' + res.data.message)
-        }
-        this.$message.success(res.data.message)
-        this.$router.push('/index/articleList')
-      }
+        // 返回 id 不等于当前的这个图片 id 的数组
+        this.article.cover = this.article.cover.filter(v => v.id !== removeId)
+      },
+      handleUploadCoverExceed () {
+        this.$message.warning('最多只能上传三张封面')
+      },
+      handleUploadCoverError () {
+        this.$message.error('上传封面失败')
+      },
+   	// ...
     },
-    // 初始化栏目
-    async initCate () {
-      const [cateErr, cateRes] = await this.$api.getCategory()
+    // ...
+  }
+  </script>
+  ```
 
-      if (cateErr) {
-        return this.$message.error('获取栏目数据出错')
-      }
-      // 去掉关注和头条两项
-      const cateData = cateRes.data.data.filter(({ name, id }) => (
-        id !== 999 && id !== 0 && name !== '头条' && name !== '关注'
-      ))
+- 编辑状态下，还要获取文章数据，所以在 `mounted()` 钩子函数中，需要将获取文章和栏目数据的操作分开
 
-      this.categories = cateData
-    },
-
-    async initArticle () {
-      const articleId = this.$route.params.id
-
-      if (!articleId) {
-        return
-      }
-
-      const [articleErr, articleRes] = await this.$api.getArticleById(articleId)
-
-      if (articleErr) {
-        return this.$message.error('获取文章数据出错')
-      }
-
-      // 初始化文章数据
-      this.article = articleRes.data.data
-
-      if (this.article.type === 1) {
-        // 初始化富文本框
-        this.$refs.articleEditor.editor.clipboard.dangerouslyPasteHTML(0, this.article.content)
-      } else {
-        // 初始化视频数据
-        this.videoList = [{ name: this.article.title, url: this.article.content }]
-      }
-
-      // 改造文章栏目数据，返回一个 id 对象数组
-      this.article.categories = this.article.categories.map(({ id }) => ({ id }))
-
-      // 初始化栏目数据
-      this.checkedCategories = this.article.categories.map(v => v.id)
-
-      // 改造封面数据，删除 uid 属性
-      this.article.cover = this.article.cover.map(({id, url}) => {
-        url = url.indexOf('http') === -1 ? this.baseURL + url : url
-        return {
-          id,
-          url
-        }
-      })
-
-      // note: 由于响应返回的数据中 cover 字段存在一个 uid 的属性，两个 uid 相同，导致
-      // Upload 组件发生冲突，从而报错
-      // cover.forEach(v => {
-      //   if (v.url.indexOf('http') === -1) {
-      //     v.url = this.baseURL + v.url
-      //   }
-      // })
-      // this.article.cover = cover
-    }
-  },
-  mounted () {
-    this.initArticle().then(() => {
+  ```vue
+  <script>
+    mounted () {
+      this.initArticle()
       this.initCate()
+    }
+  </script>
+  ```
+
+- 初始化栏目
+
+  ```js
+  // ...
+  // 初始化栏目
+  async initCate () {
+    const [cateErr, cateRes] = await this.$api.getCategory()
+  
+    if (cateErr) {
+      return this.$message.error('获取栏目数据出错')
+    }
+    // 去掉关注和头条两项
+    const cateData = cateRes.data.data.filter(({ name, id }) => (
+      id !== 999 && id !== 0 && name !== '头条' && name !== '关注'
+    ))
+  
+    this.categories = cateData
+  },
+  // ...
+  ```
+
+- 初始化文章数据
+
+  ```js
+  async initArticle () {
+    const articleId = this.$route.params.id
+  
+    if (!articleId) {
+      return
+    }
+  
+    const [articleErr, articleRes] = await this.$api.getArticleById(articleId)
+  
+    if (articleErr) {
+      return this.$message.error('获取文章数据出错')
+    }
+  
+    // 初始化文章数据
+    this.article = articleRes.data.data
+  
+    if (this.article.type === 1) {
+      // 初始化富文本框
+      this.$refs.articleEditor.editor.clipboard.dangerouslyPasteHTML(0, this.article.content)
+    } else {
+      // 初始化视频数据
+      this.videoList = [{ name: this.article.title, url: this.article.content }]
+    }
+  
+    // 改造文章栏目数据，返回一个 id 对象数组
+    this.article.categories = this.article.categories.map(({ id }) => ({ id }))
+  
+    // 初始化栏目数据
+    this.checkedCategories = this.article.categories.map(v => v.id)
+  
+    // 改造封面数据，删除 uid 属性
+    this.article.cover = this.article.cover.map(({id, url}) => {
+      url = url.indexOf('http') === -1 ? this.baseURL + url : url
+      return {
+        id,
+        url
+      }
     })
   }
-}
-</script>
+  ```
+
+  
+
+
+
+> **注意：**由于响应返回的数据中 cover 字段存在一个 uid 的属性，而每个 uid 相同，导致 `Upload` 组件发生冲突，从而报错，解决方法是将 uid 字段给去掉，以下是报错的原因，没有删掉 uid 属性
+
+```js
+// note: 由于响应返回的数据中 cover 字段存在一个 uid 的属性，两个 uid 相同，导致
+// Upload 组件发生冲突，从而报错
+this.article.cover.forEach(v => {
+  if (v.url.indexOf('http') === -1) {
+    v.url = this.baseURL + v.url
+  }
+})
+this.article.cover = cover
 ```
 
+
+
+错误提示信息
+
+<img src="src/assets/i/articleEditPage-error.png" alt="uid 冲突错误"  />
+
+
+
+- 文章发布/文章编辑完成
+
+  - 判断是否为编辑页的路由，如果是则编辑文章，否则发布文章
+  - 需要将数据进行改造才能发布
+
+  ```js
+  async publishArticle () {
+    if (this.$route.params.id) {
+      // 编辑文章
+      this.article.categories = this.checkedCategories.map(id => ({ id }))
+      this.article.cover = this.article.cover.map(({ id }) => ({ id }))
+  
+      const { title, content, categories, type, open, cover } = this.article
+  
+      const [err, res] = await this.$api.editArticleById(this.$route.params.id, {
+        title,
+        content,
+        categories,
+        cover,
+        type,
+        open
+      })
+  
+      if (err) {
+        return this.$message.error('编辑文章失败，发生错误')
+      } else if (res.data.statusCode) {
+        return this.$message.error('编辑文章失败' + res.data.message)
+      }
+      this.$message.success(res.data.message)
+      this.$router.push('/index/articleList')
+    } else {
+      // 发布文章
+      if (this.article.type === 1) {
+        // 获取富文本内容
+        this.article.content = this.$refs.articleEditor.editor.root.innerHTML
+      }
+      this.article.categories = this.checkedCategories.map(id => ({ id }))
+  
+      [err, res] = await this.$api.publishArticle(this.article)
+  
+      if (err) {
+        return this.$message.error('发布文章失败，发生错误')
+      } else if (res.data.statusCode) {
+        return this.$message.error('发布文章失败' + res.data.message)
+      }
+      this.$message.success(res.data.message)
+      this.$router.push('/index/articleList')
+    }
+  },
+  ```
+
+  > **注意：** 由于结构赋值的特性，这里的 `res` `err` 不能在外部定义，只能在赋值时定义，在外部定义的话或报错
+
+- 进入文章编辑页之后，由于组件的复用，路由在 `/index/articlePublish` 和 `/index/articlePublish/:id` 之间切换的话组件不会卸载，这时会导致路由变化了，数据还是上一个页面的状态，为了解决这个问题，同时不刷新页面影响体验，则需要卸载组件来刷新数据解决这个问题
+
+  - 需要在 `Index` 组件对路由视图进行卸载
+
+  - 在 `<router-view />` 添加 `v-if` 进行卸载
+
+    ```vue
+    <!--
+    	...
+    -->
+    <el-main>
+      <el-breadcrumb class="index-path" separator="/">
+        <el-breadcrumb-item :to="$route.name === 'Welcome' ? null : '/index/welcome'">首页</el-breadcrumb-item>
+        <el-breadcrumb-item v-if="$route.name !== 'Welcome'">{{ parentPathName }}</el-breadcrumb-item>
+        <el-breadcrumb-item v-if="$route.name !== 'Welcome'">{{ curPathName }}</el-breadcrumb-item>
+      </el-breadcrumb>
+      <router-view v-if="isAlive" />
+    </el-main>
+    <!--
+    	...
+    -->
+    ```
+
+  - 并且在 `Index` 的 `beforeRouteUpdate` 钩子进行路由判断
+
+    ```js
+    beforeRouteUpdate (to, from, next) {
+      if (to.name === 'ArticlePublish') {
+        this.isAlive = false
+        this.$nextTick(() => this.isAlive = true)
+      }
+      next()
+    }
+    ```
+
+    
+
+    

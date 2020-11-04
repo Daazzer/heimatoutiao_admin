@@ -64,7 +64,7 @@
           <el-breadcrumb-item v-if="$route.name !== 'Welcome'">{{ parentPathName }}</el-breadcrumb-item>
           <el-breadcrumb-item v-if="$route.name !== 'Welcome'">{{ curPathName }}</el-breadcrumb-item>
         </el-breadcrumb>
-        <router-view />
+        <router-view v-if="isAlive" />
       </el-main>
     </el-container>
   </el-container>
@@ -77,7 +77,8 @@ export default {
     const nickname = JSON.parse(localStorage.getItem('heimatoutiao_admin_userInfo')).nickname
 
     return {
-      nickname
+      nickname,
+      isAlive: true
     }
   },
   methods: {
@@ -113,6 +114,13 @@ export default {
           return '栏目列表'
       }
     }
+  },
+  beforeRouteUpdate (to, from, next) {
+    if (to.name === 'ArticlePublish') {
+      this.isAlive = false
+      this.$nextTick(() => this.isAlive = true)
+    }
+    next()
   }
 }
 </script>

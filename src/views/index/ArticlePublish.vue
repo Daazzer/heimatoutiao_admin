@@ -208,6 +208,10 @@ export default {
       this.$message.error('上传封面失败')
     },
     async publishArticle () {
+      if (this.checkedCategories.length <= 0) {
+        return this.$message.warning('至少选择一个栏目类别')
+      }
+
       if (this.$route.params.id) {
         // 编辑文章
         this.article.categories = this.checkedCategories.map(id => ({ id }))
@@ -229,6 +233,7 @@ export default {
         } else if (res.data.statusCode) {
           return this.$message.error('编辑文章失败' + res.data.message)
         }
+
         this.$message.success(res.data.message)
         this.$router.push('/index/articleList')
       } else {
@@ -239,7 +244,7 @@ export default {
         }
         this.article.categories = this.checkedCategories.map(id => ({ id }))
 
-        [err, res] = await this.$api.publishArticle(this.article)
+        const [err, res] = await this.$api.publishArticle(this.article)
 
         if (err) {
           return this.$message.error('发布文章失败，发生错误')
@@ -303,21 +308,11 @@ export default {
           url
         }
       })
-
-      // note: 由于响应返回的数据中 cover 字段存在一个 uid 的属性，两个 uid 相同，导致
-      // Upload 组件发生冲突，从而报错
-      // cover.forEach(v => {
-      //   if (v.url.indexOf('http') === -1) {
-      //     v.url = this.baseURL + v.url
-      //   }
-      // })
-      // this.article.cover = cover
     }
   },
   mounted () {
-    this.initArticle().then(() => {
-      this.initCate()
-    })
+    this.initArticle()
+    this.initCate()
   }
 }
 </script>
