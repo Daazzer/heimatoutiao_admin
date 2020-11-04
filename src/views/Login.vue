@@ -6,7 +6,7 @@
       :model="user"
       :rules="rules"
     >
-      <el-avatar class="login-avatar" :size="126" icon="el-icon-user-solid" />
+      <el-avatar class="login-avatar" :size="150" icon="el-icon-user-solid" />
       <el-form-item prop="username">
         <el-input
           class="login-form__username"
@@ -138,13 +138,12 @@ export default {
     }
   }
   &-avatar {
-    $size: 126px;
     position: absolute;
     display: flex;
     justify-content: center;
     align-items: center;
     left: 50%;
-    top: -$size / 2;
+    top: -(150px) / 2;
     transform: translate(-50%);
     border: 14px solid #fff;
     box-shadow: 0px 0px 12px 0px #ababab;

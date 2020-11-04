@@ -1201,7 +1201,7 @@ const routes = [
 
 - `article.type` 编辑类型单选按钮
 
-- `articleEditorConfig` [VueWordEditor](https://github.com/hsian/vue-word-editor) 组件配置，通过其 `uploadImage` 与 `uploadVideo` 配置对象的钩子函数进行内容文件上传
+- `articleEditorConfig` [VueWordEditor](https://github.com/hsian/vue-word-editor) 组件配置对象，通过其 `uploadImage` 与 `uploadVideo` 配置对象的钩子函数进行内容文件上传
 
   - 由于在 `uploadSuccess` 钩子函数上传文件不经过 `axios` 。所以，要另外设置请求 `headers`
 
@@ -1313,14 +1313,14 @@ const routes = [
 
   ```vue
   <script>
-    mounted () {
-      this.initArticle()
-      this.initCate()
-    }
+  mounted () {
+    this.initArticle()
+    this.initCate()
+  }
   </script>
   ```
 
-- 初始化栏目
+- 初始化页面时获取栏目数据
 
   ```js
   // ...
@@ -1341,7 +1341,7 @@ const routes = [
   // ...
   ```
 
-- 初始化文章数据
+- 初始化页面时判断是否为编辑页状态，如果是，则获取文章数据
 
   ```js
   async initArticle () {
@@ -1463,11 +1463,9 @@ this.article.cover = cover
 
   > **注意：** 由于结构赋值的特性，这里的 `res` `err` 不能在外部定义，只能在赋值时定义，在外部定义的话或报错
 
-- 进入文章编辑页之后，由于组件的复用，路由在 `/index/articlePublish` 和 `/index/articlePublish/:id` 之间切换的话组件不会卸载，这时会导致路由变化了，数据还是上一个页面的状态，为了解决这个问题，同时不刷新页面影响体验，则需要卸载组件来刷新数据解决这个问题
+- 进入文章编辑页之后，由于组件的复用，路由在 `/index/articlePublish` 和 `/index/articlePublish/:id` 之间切换时 `ArticlePublish.vue` 组件不会卸载。这时会导致，路由变化了，数据还是上一个页面的状态。为了解决这个问题，实现不刷新页面同时数据会更新，则需要利用组件卸载触发生命周期钩子重新调用，进行数据刷新来解决这个问题
 
-  - [@/views/index/index.vue](src/views/index/index.vue)
-
-  - 需要在 `Index` 组件对路由视图进行卸载
+  - 需要在 `Index` 组件 [@/views/index/index.vue](src/views/index/index.vue) 对路由视图进行卸载
 
   - 在 `<router-view />` 添加 `v-if` 进行卸载
 
@@ -1503,5 +1501,5 @@ this.article.cover = cover
     ```
 
     
-
+    
     
