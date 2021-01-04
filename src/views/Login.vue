@@ -67,7 +67,8 @@ export default {
     async login () {
       const isValidate = await this.$refs.loginForm.validate().then(validated => validated).catch(inValidated => inValidated)
 
-      const localToken = JSON.parse(localStorage.getItem('heimatoutiao_admin_userInfo') || '{}').token
+      const localUserInfo = JSON.parse(localStorage.getItem('heimatoutiao_admin_userInfo') || '{}')
+      const localToken = localUserInfo.token
 
       // 表单验证失败
       if (!isValidate) {
@@ -84,6 +85,8 @@ export default {
 
       if (err) {
         return this.$message.error('登录失败，发生错误')
+      } else if (!res.data.data) {
+        return this.$message.error(res.data.message);
       }
 
       const { token, user: { id, nickname } } = res.data.data
